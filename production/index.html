@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Gasoil & Planta Eléctrica</title>
+  <meta name="description" content="Sistema de control de compras de gasoil y horas de planta eléctrica con backend en Google Sheets">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS (XLSX) CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- TOP HEADER -->
+  <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-xl">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/20">
+          ⛽
+        </div>
+        <div>
+          <h1 class="text-base font-black tracking-tight text-white uppercase flex items-center gap-2">
+            Control Gasoil & Planta
+            <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">150 kVA</span>
+          </h1>
+          <p class="text-xs text-slate-400">Complejo Agroindustrial • Google Sheets DB</p>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <div class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg">
+          <span class="text-slate-400 mr-1">Tasa BCV:</span>
+          <span id="headerBcvRate" class="font-mono font-bold text-emerald-400">895,50 Bs./USD</span>
+        </div>
+        <div class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg">
+          <span class="text-slate-400 mr-1">Tanque Planta:</span>
+          <span id="headerTankPlanta" class="font-mono font-bold text-amber-400">46 L</span>
+        </div>
+        <div class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg">
+          <span class="text-slate-400 mr-1">Horómetro:</span>
+          <span id="headerHorometro" class="font-mono font-bold text-white">1425.5 h</span>
+        </div>
+        <button id="btnSyncSheets" onclick="syncFromGoogleSheets()" title="Sincronizar con Google Sheets" class="p-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-amber-400 transition">
+          🔄
+        </button>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="max-w-7xl mx-auto px-4 border-t border-slate-800/80">
+      <nav class="flex space-x-2 py-1.5 text-xs sm:text-sm font-medium overflow-x-auto">
+        <button id="nav-dashboard" onclick="switchTab('dashboard')" class="nav-tab-btn px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 font-bold">
+          📊 Dashboard General
+        </button>
+        <button id="nav-compras" onclick="switchTab('compras')" class="nav-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">
+          ⛽ Compras de Gasoil
+        </button>
+        <button id="nav-planta" onclick="switchTab('planta')" class="nav-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">
+          ⚡ Bitácora Planta
+        </button>
+        <button id="nav-graficos" onclick="switchTab('graficos')" class="nav-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">
+          📈 Gráficos Comparativos
+        </button>
+        <button id="nav-sheets" onclick="switchTab('sheets')" class="nav-tab-btn px-3 py-1.5 rounded-lg text-emerald-400 font-bold hover:text-emerald-300">
+          🌐 Conexión Google Sheets
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+
+    <!-- VIEW: DASHBOARD -->
+    <div id="view-dashboard" class="tab-view space-y-6">
+      
+      <!-- Banner -->
+      <div class="bg-gradient-to-r from-slate-900 to-slate-850 border border-slate-800 rounded-2xl p-5 shadow-lg">
+        <h2 class="text-xl font-black text-white">DASHBOARD | CONTROL DE COMPRAS DE GASOIL Y PLANTA ELÉCTRICA</h2>
+        <p class="text-xs text-slate-400 mt-1">Indicadores sincronizados con Google Sheets y cálculo automático en tiempo real</p>
+      </div>
+
+      <!-- 4 Top Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <span class="text-slate-400 text-xs font-bold uppercase block mb-1">Compras Registradas</span>
+          <div id="kpiComprasCount" class="text-3xl font-black font-mono text-white">6</div>
+          <span class="text-[11px] text-slate-500">Despachos auditados</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <span class="text-slate-400 text-xs font-bold uppercase block mb-1">Litros Comprados</span>
+          <div id="kpiLitrosComprados" class="text-3xl font-black font-mono text-blue-400">8.500 L</div>
+          <span class="text-[11px] text-slate-500">Gasoil / Diesel</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <span class="text-slate-400 text-xs font-bold uppercase block mb-1">Inversión Total (USD)</span>
+          <div id="kpiInversionUSD" class="text-2xl font-black font-mono text-emerald-400">$ 6.725,00</div>
+          <span class="text-[11px] text-slate-500">Divisas</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <span class="text-slate-400 text-xs font-bold uppercase block mb-1">Inversión Total (Bs.)</span>
+          <div id="kpiInversionBs" class="text-xl font-black font-mono text-indigo-300 truncate">5.677.775,75 Bs.</div>
+          <span class="text-[11px] text-slate-500">Moneda nacional</span>
+        </div>
+      </div>
+
+      <!-- 4 Second Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+          <span class="text-slate-400 text-xs font-bold uppercase block mb-1">Precio Promedio (USD/L)</span>
+          <div id="kpiPrecioPromUSD" class="text-2xl font-black font-mono text-white">$ 0,791</div>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+          <span class="text-slate-400 text-xs font-bold uppercase block mb-1">Precio Promedio (Bs./L)</span>
+          <div id="kpiPrecioPromBs" class="text-2xl font-black font-mono text-white">667,97 Bs.</div>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+          <span class="text-slate-400 text-xs font-bold uppercase block mb-1">Horas de Planta Registradas</span>
+          <div id="kpiHorasPlanta" class="text-2xl font-black font-mono text-amber-400">185,5 h</div>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+          <span class="text-slate-400 text-xs font-bold uppercase block mb-1">Consumo Registrado</span>
+          <div id="kpiConsumoRegistrado" class="text-2xl font-black font-mono text-sky-400">1.440 L</div>
+        </div>
+      </div>
+
+      <!-- Fuel Tank Status Gauge -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
+          <div class="w-full flex justify-between text-xs font-bold mb-2">
+            <span>Tanque Diario Generador</span>
+            <span id="tankPlantaGaugePct" class="text-amber-400 font-mono">18% de 250 L</span>
+          </div>
+          <div class="w-36 h-32 bg-slate-900 border-2 border-slate-700 rounded-2xl relative overflow-hidden flex items-center justify-center">
+            <div id="tankPlantaLiquid" class="absolute bottom-0 left-0 right-0 bg-amber-500/80" style="height: 18%;"></div>
+            <span id="tankPlantaGaugeText" class="relative z-10 text-2xl font-black font-mono text-white">46 L</span>
+          </div>
+          <span id="tankAutonomiaHours" class="text-xs text-amber-300 font-mono mt-2">5.9 h continuo</span>
+        </div>
+
+        <div class="space-y-3">
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="text-xs text-slate-400 block">Stock Tanque Nodriza (Reserva General)</span>
+            <span id="stockNodrizaText" class="text-lg font-bold font-mono text-sky-400">7.060 L</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400 block">Stock Total Disponible</span>
+              <span id="stockTotalText" class="text-lg font-bold font-mono text-emerald-400">7.106 L</span>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400 block">Autonomía Total Estimada</span>
+              <span id="autonomiaTotalText" class="text-lg font-bold font-mono text-amber-400">915,7 h</span>
+            </div>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+            <span>Próximo Mantenimiento Preventivo</span>
+            <span id="mttoHorasRestantes" class="font-mono font-bold text-emerald-400">74.5 h restantes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Split Tables -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Evolución Mensual de Compras -->
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-3">Evolución Mensual de Compras</h3>
+          <table class="w-full text-xs text-left">
+            <thead class="text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="py-2 px-3">Mes</th>
+                <th class="py-2 px-3 text-right">Litros Comprados</th>
+                <th class="py-2 px-3 text-right">Total USD</th>
+                <th class="py-2 px-3 text-right">Total Bs.</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyEvolucionMensual" class="font-mono"></tbody>
+          </table>
+        </div>
+
+        <!-- Operación de la Planta Eléctrica -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-3">Operación de la Planta Eléctrica</h3>
+          <div class="space-y-2 text-xs divide-y divide-slate-800">
+            <div class="pt-2 flex justify-between">
+              <span class="text-slate-400">Días con registro:</span>
+              <span id="opDiasRegistro" class="font-mono font-bold text-white">28</span>
+            </div>
+            <div class="pt-2 flex justify-between">
+              <span class="text-slate-400">Litros surtidos:</span>
+              <span id="opLitrosSurtidos" class="font-mono font-bold text-sky-400">1.440 L</span>
+            </div>
+            <div class="pt-2 flex justify-between">
+              <span class="text-slate-400 font-bold">Consumo promedio (L/h):</span>
+              <span id="opConsumoPromedio" class="font-mono font-bold text-amber-400 text-sm">7,76 L/h</span>
+            </div>
+            <div class="pt-2 flex justify-between">
+              <span class="text-slate-400">Último nivel de tanque (L):</span>
+              <span id="opUltimoTanque" class="font-mono font-bold text-white">46 L</span>
+            </div>
+            <div class="pt-2 flex justify-between">
+              <span class="text-slate-400">Tasa BCV más reciente:</span>
+              <span id="opTasaReciente" class="font-mono font-bold text-emerald-400">895,50 Bs./USD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VIEW: COMPRAS -->
+    <div id="view-compras" class="tab-view hidden space-y-4">
+      <div class="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <h2 class="text-lg font-bold text-white">Compras de Gasoil (Diesel)</h2>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-950 text-slate-400 uppercase">
+            <tr>
+              <th class="p-3">Fecha</th>
+              <th class="p-3">Proveedor / Factura</th>
+              <th class="p-3 text-right">Litros</th>
+              <th class="p-3 text-right">Precio USD/L</th>
+              <th class="p-3 text-right">Total USD</th>
+              <th class="p-3 text-right">Tasa BCV</th>
+              <th class="p-3 text-right">Total Bs.</th>
+              <th class="p-3">Destino</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyCompras"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW: PLANTA -->
+    <div id="view-planta" class="tab-view hidden space-y-4">
+      <div class="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <h2 class="text-lg font-bold text-white">Bitácora de Planta Eléctrica & Horómetros</h2>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-950 text-slate-400 uppercase">
+            <tr>
+              <th class="p-3">Fecha & Horario</th>
+              <th class="p-3">Motivo</th>
+              <th class="p-3 text-right">Horóm. Inicial</th>
+              <th class="p-3 text-right">Horóm. Final</th>
+              <th class="p-3 text-right">Horas</th>
+              <th class="p-3 text-right">Litros</th>
+              <th class="p-3 text-right">L/h</th>
+              <th class="p-3 text-right">Nivel Tanque</th>
+              <th class="p-3">Operador</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyPlanta"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW: GRÁFICOS -->
+    <div id="view-graficos" class="tab-view hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+          <h3 class="text-sm font-bold text-white mb-3">Litros Comprados vs Consumidos por Mes</h3>
+          <div class="h-64">
+            <canvas id="chartCompareFuel"></canvas>
+          </div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+          <h3 class="text-sm font-bold text-white mb-3">Eficiencia Operativa (L/h por Mes)</h3>
+          <div class="h-64">
+            <canvas id="chartEfficiency"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: GOOGLE SHEETS & VERCEL CONFIG -->
+    <div id="view-sheets" class="tab-view hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <h2 class="text-xl font-bold text-white mb-2">Conexión con Google Sheets & Google Apps Script</h2>
+        <p class="text-xs text-slate-400 mb-6">
+          Pega aquí la URL de tu Web App desplegada en Google Apps Script para conectar esta interfaz directamente a tu hoja de cálculo.
+        </p>
+
+        <div class="space-y-4 max-w-2xl">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">URL de la Web App de Apps Script (*.exec):</label>
+            <input id="inputAppsScriptUrl" type="url" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono">
+          </div>
+          <div class="flex gap-3">
+            <button onclick="syncFromGoogleSheets()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition">
+              Probar Conexión y Sincronizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-800 bg-slate-950 py-4 text-center text-xs text-slate-500">
+    Control de Gasoil y Planta Eléctrica • Producción Vercel & Google Sheets
+  </footer>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>

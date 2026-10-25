@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* Print Optimization */
+  @media print {
+    body {
+      background: #ffffff !important;
+      color: #000000 !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+    .print-only {
+      display: block !important;
+    }
+    .print-break-inside-avoid {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .print-shadow-none {
+      box-shadow: none !important;
+      border: 1px solid #d1d5db !important;
+    }
+  }
+
+  @media screen {
+    .print-only {
+      display: none !important;
+    }
+  }
+}
+
+/* Custom scrollbars for data tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

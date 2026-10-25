@@ -1,0 +1,22 @@
+DASHBOARD | CONTROL DE COMPRAS DE GASOIL Y PLANTA ELÉCTRICA,,,,,,,,,
+,,,,,,,,,
+Indicadores calculados a partir de las hojas “COMPRA GASOIL” y “PLANTA ELÉCTRICA”. Se actualizan al abrir en Excel.,,,,,,,,,
+,,,,,,,,,
+COMPRAS REGISTRADAS,,,LITROS COMPRADOS,,,INVERSIÓN TOTAL (USD),,,INVERSIÓN TOTAL (BS.)
+6,,,8.500 L,,,"$ 6.725,00",,,"5.677.775,75 Bs."
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+PRECIO PROMEDIO (USD/L),,,PRECIO PROMEDIO (BS./L),,,HORAS DE PLANTA REGISTRADAS,,,CONSUMO REGISTRADO
+"$ 0,791",,,"667,97 Bs.",,,"185,5 h",,,1.440 L
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+EVOLUCIÓN MENSUAL DE COMPRAS,,,,,,OPERACIÓN DE LA PLANTA ELÉCTRICA,,,
+,,,,,,,,,
+Mes,Litros comprados,Total USD,Total Bs.,,,Indicador,Resultado,,
+ago-26,1.500,"$ 1.125,00","883.203,75",,,Días con registro,28,,
+sept-26,3.000,"$ 2.400,00","1.973.744,00",,,Litros surtidos,1.440 L,,
+oct-26,4.000,"$ 3.200,00","2.820.828,00",,,Consumo promedio (L/h),"7,76 L/h",,
+,,,,,,Último nivel de tanque (L),46 L,,
+,,,,,,Tasa BCV más reciente,"0,00 Bs./USD",,

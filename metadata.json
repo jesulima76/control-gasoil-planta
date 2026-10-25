@@ -1,0 +1,6 @@
+{
+  "name": "Control de Gasoil y Planta Eléctrica",
+  "description": "Sistema integral de control de compras de gasoil (diesel), registro de horas de operación de planta eléctrica, reportes mensuales detallados y análisis comparativo de consumo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
